@@ -24,6 +24,7 @@ async function waitForFonts(): Promise<void> {
     ['bold 16px Silkscreen', 'A'],
     ['bold 16px "Pixelify Sans"', 'A'],
     ['bold 16px "Pixelify Sans"', 'ĀŃ'], // latin-ext file: the tone marks
+    ['16px VT323', 'aā'], // the answer box
   ];
   await Promise.all(faces.map(([f, c]) => document.fonts.load(f, c).catch(() => [])));
 }

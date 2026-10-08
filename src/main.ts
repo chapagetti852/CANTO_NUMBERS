@@ -10,7 +10,7 @@ const game = new Phaser.Game({
   parent: 'game-container',
   width: WIDTH * ZOOM,
   height: HEIGHT * ZOOM,
-  backgroundColor: '#0b0b1a',
+  backgroundColor: '#14060a',
   pixelArt: true,
   scale: {
     mode: Phaser.Scale.FIT,

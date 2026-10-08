@@ -18,7 +18,7 @@ export function text(
       fontStyle: yale ? 'bold' : '',
       padding: { top: Math.ceil(size / 4) }, // room for tone marks on capitals
       color,
-      stroke: '#0b0b1a',
+      stroke: HEX.bg,
       strokeThickness: Math.max(2, size / 6),
       align: 'center',
       resolution: ZOOM,
@@ -32,7 +32,7 @@ export function button(
 ): { box: Phaser.GameObjects.Rectangle; label: Phaser.GameObjects.Text } {
   const shadow = scene.add.rectangle(x + 4, y + 4, w, h, 0x000000, 0.5);
   const box = scene.add.rectangle(x, y, w, h, fill).setInteractive({ useHandCursor: true });
-  const t = text(scene, x, y, label, size, '#0b0b1a').setStroke('#0b0b1a', 0);
+  const t = text(scene, x, y, label, size, labelColor(fill)).setStroke(HEX.bg, 0);
   box.on('pointerover', () => box.setScale(1.05));
   box.on('pointerout', () => box.setScale(1));
   box.on('pointerdown', () => {
@@ -40,6 +40,12 @@ export function button(
     onClick();
   });
   return { box, label: t };
+}
+
+/** Dark text on light fills, light text on dark ones. */
+export function labelColor(fill: number): string {
+  const c = Phaser.Display.Color.IntegerToColor(fill);
+  return 0.299 * c.red + 0.587 * c.green + 0.114 * c.blue > 150 ? HEX.bg : HEX.ink;
 }
 
 /** Endless drifting pixels behind everything. Returns the emitter so callers can speed it up. */

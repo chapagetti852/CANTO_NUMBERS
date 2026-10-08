@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#0b0b1a" />
+    <meta name="theme-color" content="#14060a" />
     <title>Canto Numbers</title>
     <style>
       /* Self-hosted (OFL). Silkscreen for titles/numbers; it lacks ā and ń, so Yale uses Pixelify Sans. */
@@ -19,6 +19,17 @@
         src: url('assets/fonts/pixelify-700-latin-ext.woff2') format('woff2');
         unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
       }
+      /* VT323: a pixel terminal font that stays legible at input size, with every Yale tone mark. */
+      @font-face {
+        font-family: 'VT323'; font-display: block;
+        src: url('assets/fonts/vt323-latin.woff2') format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      @font-face {
+        font-family: 'VT323'; font-display: block;
+        src: url('assets/fonts/vt323-latin-ext.woff2') format('woff2');
+        unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+      }
       /* Chinese pixel font for popup phrases. Until a pixel font is added, the system CJK font is used.
          To add one: put it at public/assets/fonts/pixel-zh.woff2 and add
          url('assets/fonts/pixel-zh.woff2') format('woff2') to the front of src. */
@@ -28,13 +39,13 @@
         font-display: block;
       }
       :root {
-        --bg: #0b0b1a;
-        --ink: #f4f4ff;
-        --hot: #ff2e88;
-        --cyan: #22e6ff;
-        --lime: #b6ff3b;
-        --yellow: #ffd60a;
-        --panel: #1a1840;
+        /* Hong Kong flag red + bauhinia white, neon gold, bauhinia-flower pink. */
+        --bg: #14060a;
+        --panel: #2b0b12;
+        --ink: #fff4ef;
+        --red: #e8112d;
+        --rose: #ff6b93;
+        --gold: #ffc23d;
       }
       * { box-sizing: border-box; }
       html, body {
@@ -59,7 +70,7 @@
         display: none;
         padding: 8px 12px calc(10px + env(safe-area-inset-bottom));
         background: var(--panel);
-        border-top: 4px solid var(--hot);
+        border-top: 4px solid var(--red);
       }
       #answer-bar.on { display: block; }
       .row { display: flex; gap: 6px; }
@@ -67,20 +78,21 @@
       #answer {
         flex: 1;
         min-width: 0;
-        font: 700 22px 'Pixelify Sans', monospace;
-        text-transform: uppercase;
+        font: 32px 'VT323', monospace;
+        line-height: 1;
         color: var(--ink);
         background: var(--bg);
-        border: 3px solid var(--cyan);
-        padding: 8px 10px;
+        border: 3px solid var(--rose);
+        padding: 4px 10px;
         outline: none;
         border-radius: 0;
       }
-      #answer:focus { border-color: var(--lime); }
+      #answer:focus { border-color: var(--gold); }
+      #answer::placeholder { color: #6e4a50; }
       button {
         font: 700 16px 'Silkscreen', monospace;
         color: var(--bg);
-        background: var(--yellow);
+        background: var(--gold);
         border: 0;
         box-shadow: inset -3px -3px 0 rgba(0,0,0,.35);
         padding: 8px 12px;
@@ -88,14 +100,14 @@
         border-radius: 0;
       }
       button:active { transform: translateY(2px); box-shadow: none; }
-      #go { background: var(--lime); }
-      #replay { background: var(--cyan); }
+      #go { background: var(--gold); }
+      #replay { background: var(--rose); }
       #tones button {
         flex: 1;
         padding: 8px 0;
-        background: var(--hot);
+        background: var(--red);
         color: var(--ink);
-        font: 700 17px 'Pixelify Sans', monospace;
+        font: 28px 'VT323', monospace;
         line-height: 1;
       }
       #tones button small { display: block; font: 400 9px 'Silkscreen', monospace; opacity: .8; margin-top: 3px; }

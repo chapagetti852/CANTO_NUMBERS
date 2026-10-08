@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "tts:test": "tsx --env-file=.env scripts/tts-test.ts",
+    "tts:clips": "tsx --env-file=.env scripts/gen-clips.ts"
   },
   "dependencies": {
     "phaser": "^4.2.1"
@@ -15,6 +17,7 @@
   "devDependencies": {
     "@types/node": "^26.6.4",
     "playwright": "^1.64.0",
+    "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.3",
     "vitest": "^5.0.3"

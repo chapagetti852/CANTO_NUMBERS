@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { setupCamera, shake, WIDTH, ZOOM } from '../view';
 import { clearInput, setLocked, showBar } from '../answerBar';
 import { hasClip, hasClips, speak, stop } from '../audio';
-import { COLORS, HEX, state } from '../state';
+import { COLORS, HEX, PAL, state } from '../state';
 import { checkYale, parseDigits, type YaleVerdict } from '../yale/check';
 import { pool, randomItem, type Item } from '../yale/items';
 import { confettiBackground, FONT_ZH, text } from '../ui';
@@ -67,18 +67,18 @@ export class GameScene extends Phaser.Scene {
     }).setDepth(5);
 
     // HUD
-    this.add.rectangle(cx, 10, w - 24, 8, 0x3a3870);
-    this.timerBar = this.add.rectangle(12, 10, w - 24, 8, 0xb6ff3b).setOrigin(0, 0.5);
-    this.scoreText = text(this, 16, 34, '0', 20, HEX.yellow).setOrigin(0, 0.5);
-    this.streakText = text(this, w - 16, 34, '', 14, HEX.hot).setOrigin(1, 0.5);
+    this.add.rectangle(cx, 10, w - 24, 8, PAL.track);
+    this.timerBar = this.add.rectangle(12, 10, w - 24, 8, PAL.gold).setOrigin(0, 0.5);
+    this.scoreText = text(this, 16, 34, '0', 20, HEX.gold).setOrigin(0, 0.5);
+    this.streakText = text(this, w - 16, 34, '', 14, HEX.rose).setOrigin(1, 0.5);
     text(this, cx, 34, `${state.mode} · lv ${state.level}`, 10, HEX.dim);
     const quit = text(this, cx, 52, '[ quit ]', 9, HEX.dim).setInteractive({ useHandCursor: true });
     quit.on('pointerdown', () => this.finish());
 
     // Prompt
     this.prompt = text(this, cx, 220, '', 56, HEX.ink);
-    this.tag = text(this, cx, 290, '', 14, HEX.cyan);
-    this.reveal = text(this, cx, 360, '', 22, HEX.lime, true).setWordWrapWidth(w - 32);
+    this.tag = text(this, cx, 290, '', 14, HEX.ink);
+    this.reveal = text(this, cx, 360, '', 22, HEX.gold, true).setWordWrapWidth(w - 32);
 
     if (this.listen) {
       this.listenPool = pool(state.level).filter((it) => !hasClips() || hasClip(it));
@@ -101,7 +101,7 @@ export class GameScene extends Phaser.Scene {
     if (this.over || this.paused) return;
     this.timeLeft -= dt;
     this.timerBar.scaleX = Math.max(0, this.timeLeft / ROUND_MS);
-    this.timerBar.fillColor = this.timeLeft < 10_000 ? 0xff2e88 : 0xb6ff3b;
+    this.timerBar.fillColor = this.timeLeft < 10_000 ? PAL.red : PAL.gold;
     if (this.timeLeft <= 0) this.finish();
   }
 
@@ -122,7 +122,7 @@ export class GameScene extends Phaser.Scene {
     } else {
       this.prompt.setText(it.display);
       this.tag.setText(it.form === 'contracted' ? '★ contracted ★' : 'full form');
-      this.tag.setColor(it.form === 'contracted' ? HEX.hot : HEX.cyan);
+      this.tag.setColor(it.form === 'contracted' ? HEX.rose : HEX.ink);
     }
     this.tweens.add({ targets: this.prompt, scale: 1, duration: 220, ease: 'Back.Out' });
   }
@@ -161,10 +161,10 @@ export class GameScene extends Phaser.Scene {
     if (this.streak >= 5) shake(this, 120, Math.min(6, 1 + this.streak * 0.25));
     this.bg.frequency = Math.max(8, 60 - this.streak * 5);
     this.popup(Phaser.Utils.Array.GetRandom(GOOD), true);
-    this.floatText(`+${gained}`, HEX.yellow);
+    this.floatText(`+${gained}`, HEX.gold);
 
     if (this.listen) {
-      this.prompt.setText(this.item.display).setColor(HEX.lime);
+      this.prompt.setText(this.item.display).setColor(HEX.gold);
       this.reveal.setText(this.item.answers[0].toUpperCase());
     }
     clearInput();
@@ -180,11 +180,11 @@ export class GameScene extends Phaser.Scene {
     this.streakText.setText('');
     this.bg.frequency = 60;
     shake(this, 200, 5);
-    this.cameras.main.flash(120, 255, 0, 60);
+    this.cameras.main.flash(120, 232, 17, 45);
     this.popup(Phaser.Utils.Array.GetRandom(verdict === 'tone' ? TONE : BAD), false);
 
     // Glitch the prompt, then show the answer: this is where the learning happens.
-    this.prompt.setColor(HEX.hot);
+    this.prompt.setColor(HEX.red);
     this.tweens.add({ targets: this.prompt, x: '+=6', duration: 30, yoyo: true, repeat: 5 });
     if (this.listen) this.prompt.setText(this.item.display);
     this.reveal.setText(((verdict === 'tone' ? 'check tones: ' : '') + this.item.answers[0]).toUpperCase());
@@ -204,9 +204,9 @@ export class GameScene extends Phaser.Scene {
   private popup([zh, yale]: string[], good: boolean): void {
     const x = Phaser.Math.Between(70, WIDTH - 70);
     const y = good ? Phaser.Math.Between(110, 160) : Phaser.Math.Between(430, 450);
-    const color = Phaser.Utils.Array.GetRandom(good ? [HEX.lime, HEX.yellow, HEX.cyan] : [HEX.hot]);
+    const color = Phaser.Utils.Array.GetRandom(good ? [HEX.gold, HEX.ink, HEX.rose] : [HEX.red]);
     const z = this.add.text(x, y, zh, {
-      fontFamily: FONT_ZH, fontSize: '32px', color, stroke: '#0b0b1a', strokeThickness: 6, resolution: ZOOM,
+      fontFamily: FONT_ZH, fontSize: '32px', color, stroke: HEX.bg, strokeThickness: 6, resolution: ZOOM,
     }).setOrigin(0.5).setDepth(10);
     const r = text(this, x, y + 28, yale, 14, color, true).setDepth(10);
     const angle = Phaser.Math.Between(-18, 18);

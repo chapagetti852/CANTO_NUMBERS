@@ -1,9 +1,12 @@
 import Phaser from 'phaser';
 import { setupCamera, WIDTH } from '../view';
 import { hideBar } from '../answerBar';
-import { COLORS, HEX, save, state, type Mode } from '../state';
+import { HEX, PAL, save, state, type Mode } from '../state';
 import { LEVELS } from '../yale/items';
-import { button, confettiBackground, text } from '../ui';
+import { button, confettiBackground, labelColor, text } from '../ui';
+
+const TITLE = [HEX.red, HEX.ink, HEX.gold, HEX.rose];
+const LEVEL_FILLS = [PAL.red, PAL.white, PAL.gold, PAL.rose, PAL.coral];
 
 export class MenuScene extends Phaser.Scene {
   constructor() {
@@ -24,7 +27,7 @@ export class MenuScene extends Phaser.Scene {
       delay: 120,
       loop: true,
       callback: () => letters.forEach((l, i) => {
-        l.setColor(Phaser.Display.Color.IntegerToColor(COLORS[(i + Math.floor(this.time.now / 120)) % COLORS.length]).rgba);
+        l.setColor(TITLE[(i + Math.floor(this.time.now / 120)) % TITLE.length]);
         l.y = 52 + Math.sin(this.time.now / 150 + i) * 3;
       }),
     });
@@ -46,14 +49,14 @@ export class MenuScene extends Phaser.Scene {
     // Levels.
     const levelRows = LEVELS.map((l, i) => {
       const y = 210 + i * 62;
-      const b = button(this, cx, y, 300, 50, '', COLORS[i], () => this.start(l.level));
+      const b = button(this, cx, y, 300, 50, '', LEVEL_FILLS[i], () => this.start(l.level));
       b.label.setText(`${l.level}  ${l.name}`.toUpperCase()).setY(y - 7);
-      const sub = text(this, cx, y + 12, '', 11, '#0b0b1a', true).setStroke('#000', 0);
+      const sub = text(this, cx, y + 12, '', 11, labelColor(LEVEL_FILLS[i]), true).setStroke('#000', 0);
       return { level: l.level, hint: l.hint, sub };
     });
 
     // Tone button toggle.
-    const tones = text(this, cx, 532, '', 12, HEX.cyan).setInteractive({ useHandCursor: true });
+    const tones = text(this, cx, 532, '', 12, HEX.rose).setInteractive({ useHandCursor: true });
     tones.on('pointerdown', () => {
       state.toneButtons = !state.toneButtons;
       save();
@@ -62,7 +65,11 @@ export class MenuScene extends Phaser.Scene {
     text(this, cx, 572, 'tap a level · keys 1-5', 9, HEX.dim);
 
     const refresh = () => {
-      modeButtons.forEach((b, i) => b.box.setFillStyle(modes[i].mode === state.mode ? 0xffd60a : 0x3a3870));
+      modeButtons.forEach((b, i) => {
+        const fill = modes[i].mode === state.mode ? PAL.gold : PAL.track;
+        b.box.setFillStyle(fill);
+        b.label.setColor(labelColor(fill));
+      });
       modeHint.setText(state.mode === 'listen' ? 'HEAR IT → TYPE DIGITS' : 'SEE IT → TYPE YALE');
       levelRows.forEach((r) => {
         const best = state.best[`${state.mode}-${r.level}`];

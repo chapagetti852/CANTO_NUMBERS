@@ -39,5 +39,10 @@ export function recordBest(score: number): boolean {
   return true;
 }
 
-export const COLORS = [0xff2e88, 0x22e6ff, 0xb6ff3b, 0xffd60a, 0x9b5cff, 0xff7a1a];
-export const HEX = { ink: '#f4f4ff', hot: '#ff2e88', cyan: '#22e6ff', lime: '#b6ff3b', yellow: '#ffd60a', dim: '#7a78b0' };
+// Hong Kong flag red and bauhinia white, with neon-sign gold and bauhinia-flower pinks.
+export const PAL = {
+  bg: 0x14060a, track: 0x3d1219, red: 0xe8112d, deep: 0x9e0b1f,
+  white: 0xfff4ef, gold: 0xffc23d, rose: 0xff6b93, coral: 0xff8a5c,
+};
+export const COLORS = [PAL.red, PAL.white, PAL.gold, PAL.rose, PAL.coral, PAL.deep];
+export const HEX = { bg: '#14060a', ink: '#fff4ef', red: '#ff2a44', rose: '#ff6b93', gold: '#ffc23d', dim: '#b0848a' };

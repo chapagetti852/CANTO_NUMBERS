@@ -4,19 +4,20 @@ import { COLORS, HEX } from './state';
 import { HEIGHT, WIDTH, ZOOM } from './view';
 
 export const FONT = 'Silkscreen, monospace';
-/** Silkscreen lacks ā and ń, so anything in Yale uses Pixelify Sans. */
-export const FONT_YALE = '"Pixelify Sans", monospace';
+/** Silkscreen lacks ā and ń, so Yale uses VT323: has every tone mark, legible digits, lowercase. */
+export const FONT_YALE = 'VT323, monospace';
+/** VT323 is small for its nominal size; scale so `size` means roughly the same height in both fonts. */
+const YALE_SCALE = 1.5;
 export const FONT_ZH = 'PixelZh, "PingFang HK", "Noto Sans TC", sans-serif';
 
 export function text(
   scene: Phaser.Scene, x: number, y: number, s: string, size = 16, color = HEX.ink, yale = false,
 ): Phaser.GameObjects.Text {
   return scene.add
-    .text(x, y, s.toUpperCase(), {
+    .text(x, y, yale ? s : s.toUpperCase(), {
       fontFamily: yale ? FONT_YALE : FONT,
-      fontSize: `${size}px`,
-      fontStyle: yale ? 'bold' : '',
-      padding: { top: Math.ceil(size / 4) }, // room for tone marks on capitals
+      fontSize: `${Math.round(yale ? size * YALE_SCALE : size)}px`,
+      padding: { top: Math.ceil(size / 4) }, // room for tone marks
       color,
       stroke: HEX.bg,
       strokeThickness: Math.max(2, size / 6),

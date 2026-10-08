@@ -4,6 +4,7 @@ import { hideBar } from '../answerBar';
 import { cleanName, leaderboardEnabled, postScore, topScores, type Entry } from '../leaderboard';
 import { hideNameBar, setPosting, showNameBar } from '../nameBar';
 import { COLORS, HEX, PAL, recordBest, save, state } from '../state';
+import { playMusic } from '../sound';
 import { button, confettiBackground, text } from '../ui';
 
 interface Result {
@@ -26,6 +27,7 @@ export class ResultsScene extends Phaser.Scene {
   create(r: Result): void {
     hideBar();
     setupCamera(this);
+    playMusic(this, 'menu');
     const cx = WIDTH / 2;
     confettiBackground(this);
     const best = recordBest(r.score);
@@ -62,7 +64,7 @@ export class ResultsScene extends Phaser.Scene {
     }
 
     button(this, cx - 62, 430, 112, 40, 'again', PAL.gold, () => this.scene.start('Game'));
-    button(this, cx + 62, 430, 112, 40, 'menu', PAL.white, () => this.scene.start('Menu'));
+    button(this, cx + 62, 430, 112, 40, 'levels', PAL.white, () => this.scene.start('Levels'));
 
     this.time.delayedCall(600, () => this.input.keyboard?.once('keydown-ENTER', () => this.scene.start('Game')));
   }

@@ -1,10 +1,15 @@
 import Phaser from 'phaser';
 import { loadManifest } from '../audio';
+import { loadSounds } from '../sound';
 
 /** Waits for fonts and the audio manifest, and makes the one pixel texture everything uses. */
 export class BootScene extends Phaser.Scene {
   constructor() {
     super('Boot');
+  }
+
+  preload(): void {
+    loadSounds(this);
   }
 
   create(): void {
@@ -22,9 +27,8 @@ async function waitForFonts(): Promise<void> {
   const faces: [string, string][] = [
     ['16px Silkscreen', 'A'],
     ['bold 16px Silkscreen', 'A'],
-    ['bold 16px "Pixelify Sans"', 'A'],
-    ['bold 16px "Pixelify Sans"', 'ĀŃ'], // latin-ext file: the tone marks
-    ['16px VT323', 'aā'], // the answer box
+    ['16px VT323', 'a'],
+    ['16px VT323', 'āń'], // latin-ext file: the tone marks
   ];
   await Promise.all(faces.map(([f, c]) => document.fonts.load(f, c).catch(() => [])));
 }

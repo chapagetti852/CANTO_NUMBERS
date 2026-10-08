@@ -1,6 +1,7 @@
 // Number audio: Azure clips from public/assets/audio/clips when generated,
 // otherwise the browser's own Cantonese voice as a stand-in for development.
 import type { Item } from './yale/items';
+import { duck } from './sound';
 
 let manifest: Record<string, string> = {};
 let current: HTMLAudioElement | null = null;
@@ -26,10 +27,15 @@ export function speak(item: Item, rate = 1): void {
   stop();
   const file = manifest[item.id];
   if (file) {
-    current = new Audio(`assets/audio/clips/${file}`);
-    current.playbackRate = rate;
-    current.preservesPitch = true;
-    void current.play().catch(() => undefined);
+    const clip = new Audio(`assets/audio/clips/${file}`);
+    current = clip;
+    clip.playbackRate = rate;
+    clip.preservesPitch = true;
+    const done = () => current === clip && duck(false);
+    clip.addEventListener('ended', done);
+    clip.addEventListener('error', done);
+    duck(true);
+    void clip.play().catch(done);
     return;
   }
   if (!('speechSynthesis' in window)) return;
@@ -38,11 +44,14 @@ export function speak(item: Item, rate = 1): void {
   u.rate = rate;
   const voice = speechSynthesis.getVoices().find((v) => v.lang.replace('_', '-') === 'zh-HK');
   if (voice) u.voice = voice;
+  u.onend = () => duck(false);
+  duck(true);
   speechSynthesis.speak(u);
 }
 
 export function stop(): void {
   current?.pause();
   current = null;
+  duck(false);
   if ('speechSynthesis' in window) speechSynthesis.cancel();
 }

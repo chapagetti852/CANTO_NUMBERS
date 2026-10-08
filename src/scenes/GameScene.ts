@@ -1,14 +1,16 @@
 import Phaser from 'phaser';
 import { setupCamera, shake, WIDTH, ZOOM } from '../view';
 import { clearInput, setLocked, showBar } from '../answerBar';
+import { playMusic, sfx } from '../sound';
 import { hasClip, hasClips, speak, stop } from '../audio';
 import { COLORS, HEX, PAL, state } from '../state';
-import { checkYale, parseDigits, type YaleVerdict } from '../yale/check';
+import { checkYale, normalizeYale, parseDigits, type YaleVerdict } from '../yale/check';
 import { pool, randomItem, type Item } from '../yale/items';
 import { confettiBackground, FONT_ZH, text } from '../ui';
 
 const ROUND_MS = 60_000;
-const REVEAL_MS = 1600;
+/** Ignore NEXT for a moment after a miss so a double-tap doesn't skip the review. */
+const REVIEW_MIN_MS = 400;
 
 const GOOD = [['好嘢', 'hóu yéh!'], ['正！', 'jeng!'], ['犀利', 'sāi leih!'], ['叻！', 'lēk!'], ['勁！', 'gihng!']];
 const BAD = [['錯！', 'cho!'], ['再試', 'joi si'], ['加油', 'gā yàuh!'], ['哎呀', 'āai ya!']];
@@ -25,6 +27,9 @@ export class GameScene extends Phaser.Scene {
   private timeLeft = ROUND_MS;
   private paused = false;
   private over = false;
+  private reviewing = false;
+  private reviewSince = 0;
+  private reviewObjs: Phaser.GameObjects.GameObject[] = [];
 
   private prompt!: Phaser.GameObjects.Text;
   private tag!: Phaser.GameObjects.Text;
@@ -50,7 +55,9 @@ export class GameScene extends Phaser.Scene {
   create(): void {
     Object.assign(this, {
       recent: [], score: 0, streak: 0, correct: 0, answered: 0, timeLeft: ROUND_MS, paused: false, over: false,
+      reviewing: false, reviewObjs: [],
     });
+    playMusic(this, 'game');
     setupCamera(this);
     const w = WIDTH;
     const cx = w / 2;
@@ -82,14 +89,11 @@ export class GameScene extends Phaser.Scene {
 
     if (this.listen) {
       this.listenPool = pool(state.level).filter((it) => !hasClips() || hasClip(it));
-      text(this, cx, 470, 'type the number · empty enter = replay', 9, HEX.dim);
-    } else {
-      text(this, cx, 470, 'type it in yale · tones count', 9, HEX.dim);
     }
 
     showBar({
       digits: this.listen,
-      toneButtons: state.toneButtons,
+      tiles: state.tiles,
       submit: (v) => this.submit(v),
       replay: () => this.listen && speak(this.item, this.rate),
     });
@@ -128,6 +132,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private submit(raw: string): void {
+    if (this.reviewing) return this.endReview();
     if (this.paused || this.over) return;
     const value = raw.trim();
     if (!value) {
@@ -144,7 +149,7 @@ export class GameScene extends Phaser.Scene {
     }
     this.answered++;
     if (verdict === 'correct') this.win();
-    else this.lose(verdict);
+    else this.lose(verdict, value);
   }
 
   private win(): void {
@@ -162,10 +167,16 @@ export class GameScene extends Phaser.Scene {
     this.bg.frequency = Math.max(8, 60 - this.streak * 5);
     this.popup(Phaser.Utils.Array.GetRandom(GOOD), true);
     this.floatText(`+${gained}`, HEX.gold);
+    if (this.streak % 5 === 0) {
+      sfx('combo', 0.5);
+      this.time.delayedCall(120, () => this.burst.explode(120, x, y));
+    } else {
+      sfx('correct', 0.5);
+    }
 
     if (this.listen) {
       this.prompt.setText(this.item.display).setColor(HEX.gold);
-      this.reveal.setText(this.item.answers[0].toUpperCase());
+      this.reveal.setText(this.item.answers[0]);
     }
     clearInput();
     this.paused = true;
@@ -175,35 +186,97 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  private lose(verdict: YaleVerdict): void {
+  private lose(verdict: YaleVerdict, typed: string): void {
     this.streak = 0;
     this.streakText.setText('');
     this.bg.frequency = 60;
+    sfx('wrong', 0.5);
     shake(this, 200, 5);
     this.cameras.main.flash(120, 232, 17, 45);
     this.popup(Phaser.Utils.Array.GetRandom(verdict === 'tone' ? TONE : BAD), false);
 
-    // Glitch the prompt, then show the answer: this is where the learning happens.
     this.prompt.setColor(HEX.red);
     this.tweens.add({ targets: this.prompt, x: '+=6', duration: 30, yoyo: true, repeat: 5 });
-    if (this.listen) this.prompt.setText(this.item.display);
-    this.reveal.setText(((verdict === 'tone' ? 'check tones: ' : '') + this.item.answers[0]).toUpperCase());
-    if (this.listen) speak(this.item, 1);
+    if (this.listen) {
+      this.prompt.setText(this.item.display);
+      speak(this.item, 1);
+    }
 
+    // The clock stops and the answer stays until NEXT: this is where the learning happens.
     this.paused = true;
+    this.reviewing = true;
+    this.reviewSince = this.time.now;
     setLocked(true);
-    this.time.delayedCall(REVEAL_MS, () => {
-      this.paused = false;
-      setLocked(false);
-      clearInput();
-      if (!this.over) this.next();
+    this.showReview(verdict, typed);
+  }
+
+  private showReview(verdict: YaleVerdict, typed: string): void {
+    const cx = WIDTH / 2;
+    const add = <T extends Phaser.GameObjects.GameObject>(o: T): T => (this.reviewObjs.push(o), o);
+    this.reveal.setText('');
+    const head = this.listen ? 'answer' : verdict === 'tone' ? 'right syllables · check the tones' : 'not quite · gold = what to fix';
+    add(text(this, cx, 330, head, 10, verdict === 'tone' ? HEX.gold : HEX.red));
+    add(text(this, cx, 356, `you: ${typed}`, 14, HEX.dim, true).setWordWrapWidth(320));
+    const y = this.syllableRow(this.item.answers[0], this.listen ? null : typed, 392);
+    if (this.item.alt) {
+      const label = this.item.form === 'contracted' ? 'full form' : 'short form';
+      add(text(this, cx, y + 8, `${label}: ${this.item.alt}`, 12, HEX.dim, true).setWordWrapWidth(320));
+    }
+    if (this.item.answers.length > 1) {
+      add(text(this, cx, y + 30, `also ok: ${this.item.answers[1]}`, 12, HEX.dim, true));
+    }
+    add(text(this, cx, 560, 'tap next or press enter', 9, HEX.dim));
+  }
+
+  /** The correct answer, word by word, with the words that differ from `typed` in gold. Returns the bottom y. */
+  private syllableRow(answer: string, typed: string | null, top: number): number {
+    const units = answer.split(/\s+/);
+    const theirs = typed ? typed.normalize('NFC').toLowerCase().trim().split(/[\s-]+/) : [];
+    let k = 0;
+    const words = units.map((u) => {
+      const syl = u.split('-');
+      const wrong = typed !== null && syl.some((s, j) => normalizeYale(s) !== normalizeYale(theirs[k + j] ?? ''));
+      k += syl.length;
+      const t = text(this, 0, 0, u, 24, wrong ? HEX.gold : HEX.ink, true);
+      this.reviewObjs.push(t);
+      return t;
     });
+    // Lay out centred lines, wrapping at the screen width.
+    const gap = 10;
+    const maxW = WIDTH - 32;
+    let line: Phaser.GameObjects.Text[] = [];
+    let y = top;
+    const flush = () => {
+      const w = line.reduce((a, t) => a + t.width, 0) + gap * (line.length - 1);
+      let x = (WIDTH - w) / 2;
+      line.forEach((t) => { t.setOrigin(0, 0.5).setPosition(x, y); x += t.width + gap; });
+      line = [];
+      y += 32;
+    };
+    for (const t of words) {
+      const w = line.reduce((a, o) => a + o.width + gap, 0) + t.width;
+      if (line.length && w > maxW) flush();
+      line.push(t);
+    }
+    flush();
+    return y;
+  }
+
+  private endReview(): void {
+    if (this.time.now - this.reviewSince < REVIEW_MIN_MS) return;
+    this.reviewObjs.forEach((o) => o.destroy());
+    this.reviewObjs = [];
+    this.reviewing = false;
+    this.paused = false;
+    setLocked(false);
+    clearInput();
+    if (!this.over) this.next();
   }
 
   /** Chinese phrase + Yale, flung out of the prompt. */
   private popup([zh, yale]: string[], good: boolean): void {
     const x = Phaser.Math.Between(70, WIDTH - 70);
-    const y = good ? Phaser.Math.Between(110, 160) : Phaser.Math.Between(430, 450);
+    const y = Phaser.Math.Between(110, 160);
     const color = Phaser.Utils.Array.GetRandom(good ? [HEX.gold, HEX.ink, HEX.rose] : [HEX.red]);
     const z = this.add.text(x, y, zh, {
       fontFamily: FONT_ZH, fontSize: '32px', color, stroke: HEX.bg, strokeThickness: 6, resolution: ZOOM,

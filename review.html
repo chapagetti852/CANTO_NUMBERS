@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Clip Review</title>
+    <style>
+      @font-face { font-family: 'VT323'; src: url('assets/fonts/vt323-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+2000-206F; }
+      @font-face { font-family: 'VT323'; src: url('assets/fonts/vt323-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02FF, U+1E00-1EFF; }
+      :root { --bg: #14060a; --panel: #2b0b12; --ink: #fff4ef; --red: #e8112d; --gold: #ffc23d; --dim: #b0848a; --good: #3ddc84; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--ink); font: 22px 'VT323', monospace; }
+      header { position: sticky; top: 0; background: var(--panel); padding: 12px 16px; border-bottom: 3px solid var(--red); }
+      header p { margin: 4px 0 0; color: var(--dim); font-size: 18px; }
+      label { color: var(--dim); font-size: 18px; margin-right: 12px; }
+      main { max-width: 760px; margin: 0 auto; padding: 8px 16px 80px; }
+      .row { display: grid; grid-template-columns: 90px 1fr 90px auto; gap: 10px; align-items: center; padding: 6px 8px; border-bottom: 1px solid #3d1219; }
+      .row.current { background: #3d1219; outline: 2px solid var(--gold); }
+      .row.good .yale { color: var(--good); }
+      .row.bad .yale { color: var(--red); text-decoration: line-through; }
+      .disp { color: var(--gold); }
+      .voice { color: var(--dim); font-size: 18px; }
+      button { font: 20px 'VT323', monospace; border: 0; padding: 4px 10px; cursor: pointer; background: #4a1520; color: var(--ink); }
+      button.g { background: #1f5a37; } button.b { background: #7a1020; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div><strong>clip review</strong> <span id="count"></span></div>
+      <p>Keys: <b>space</b> replay · <b>g</b> good · <b>b</b> bad · <b>↓/↑</b> move. Marking plays the next clip.
+         Then run <code>npm run tts:clips</code>: bad clips get another voice; bad in all 3 voices = dropped.</p>
+      <label><input type="checkbox" id="all" /> show full forms too</label>
+      <label><input type="checkbox" id="unrated" checked /> only unrated</label>
+    </header>
+    <main id="list"></main>
+    <script type="module" src="/src/review.ts"></script>
+  </body>
+</html>

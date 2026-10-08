@@ -8,7 +8,7 @@ const clipsFetched = `performance.getEntriesByType('resource').filter(e => e.nam
 export default [
   { name: 'switch to listen + reload', action: 'expect', expect: { expression: `(() => { localStorage.setItem('canto-numbers-v1', JSON.stringify({ mode: 'listen', level: 4 })); setTimeout(() => location.reload(), 0); return true; })()` } },
   { name: 'reload', action: 'wait', ms: 3000 },
-  { name: 'start level 4', action: 'expect', expect: { expression: `(() => { window.__PHASER_GAME__.scene.getScene('Menu').start(4); return true; })()` } },
+  { name: 'start level 4', action: 'expect', expect: { expression: `(() => { const g = window.__PHASER_GAME__; g.scene.getScene('Menu').scene.start('Levels'); setTimeout(() => g.scene.getScene('Levels').start(4), 50); return true; })()` } },
   { name: 'w', action: 'wait', ms: 800 },
   { name: 'in listen mode', action: 'expect', expect: { expression: `${G}.listen`, equals: true } },
   { name: 'pool uses generated clips', action: 'expect', expect: { expression: `${G}.listenPool.length`, atLeast: 50 } },

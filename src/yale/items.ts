@@ -14,14 +14,15 @@ export interface Item {
   form: Form;
   answers: string[];    // accepted Yale, canonical first
   tts: string;          // Chinese text for Azure (may contain SSML tags like <break>)
+  alt?: string;         // the other form (full ⇄ contracted), shown when reviewing a miss
 }
 
 export const LEVELS = [
-  { level: 1, name: '0–99', hint: 'full forms' },
-  { level: 2, name: 'Contracted', hint: 'yah yāt, sā-ah baat' },
-  { level: 3, name: 'Dollars & 100s', hint: 'léuhng mān, baak yih' },
-  { level: 4, name: 'Dollars & cents', hint: 'sāam go yih' },
-  { level: 5, name: 'Everything', hint: 'maahn, 1.3× speed' },
+  { level: 1, name: 'Numbers 0–99', example: '38 → sāam sahp baat' },
+  { level: 2, name: 'Short forms', example: '38 → sā-ah baat' },
+  { level: 3, name: 'Prices & hundreds', example: '$2 → léuhng mān' },
+  { level: 4, name: 'Dollars & cents', example: '$3.20 → sāam go yih' },
+  { level: 5, name: 'Mix it up, fast', example: 'everything · 1.3× speed' },
 ] as const;
 
 function make(value: number, money: boolean, form: Form): Item | null {
@@ -29,6 +30,9 @@ function make(value: number, money: boolean, form: Form): Item | null {
     ? form === 'full' ? moneyFull(value) : moneyContracted(value)
     : form === 'full' ? fullForms(value) : contractedForms(value);
   if (!readings.length) return null;
+  const other: Reading[] = money
+    ? form === 'full' ? moneyContracted(value) : moneyFull(value)
+    : form === 'full' ? contractedForms(value) : fullForms(value);
   return {
     id: `${money ? 'm' : 'n'}${value}-${form === 'full' ? 'f' : 'c'}`,
     display: money ? formatMoney(value) : value.toLocaleString('en-US'),
@@ -37,6 +41,7 @@ function make(value: number, money: boolean, form: Form): Item | null {
     form,
     answers: readings.map((r) => r.yale),
     tts: readings[0].zh,
+    alt: other[0]?.yale,
   };
 }
 

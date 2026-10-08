@@ -6,6 +6,7 @@ interface Saved {
   mode: Mode;
   level: number;
   tiles: boolean;        // syllable tile keyboard in Read mode (else type)
+  muted: boolean;        // music + sfx (number clips always play)
   name: string;
   best: Record<string, number>; // "listen-3" → score
   v?: number;                    // save format version
@@ -14,7 +15,7 @@ interface Saved {
 const KEY = 'canto-numbers-v1';
 
 function load(): Saved {
-  const fallback: Saved = { mode: 'read', level: 1, tiles: true, name: '', best: {}, v: 2 };
+  const fallback: Saved = { mode: 'read', level: 1, tiles: true, muted: false, name: '', best: {}, v: 2 };
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return fallback;

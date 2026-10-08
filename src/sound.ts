@@ -1,6 +1,7 @@
 // SFX and music. Music is loud-ish on the menu, quiet in play, and ducks almost to
 // silence while a Listen-mode number clip is playing.
 import Phaser from 'phaser';
+import { state } from './state';
 
 const LEVELS = { menu: 0.5, game: 0.12, ducked: 0.03 };
 type MusicLevel = 'menu' | 'game';
@@ -31,7 +32,7 @@ export function playMusic(scene: Phaser.Scene, level: MusicLevel): void {
 
 function apply(): void {
   if (!music) return;
-  const target = ducked ? Math.min(base, LEVELS.ducked) : base;
+  const target = state.muted ? 0 : ducked ? Math.min(base, LEVELS.ducked) : base;
   music.setVolume(target);
 }
 
@@ -41,5 +42,11 @@ export function duck(on: boolean): void {
 }
 
 export function sfx(key: 'correct' | 'wrong' | 'combo', volume = 0.6): void {
-  manager?.play(`sfx-${key}`, { volume });
+  if (!state.muted) manager?.play(`sfx-${key}`, { volume });
+}
+
+/** Mutes music and sfx. Listen-mode number clips are HTML audio and keep playing. */
+export function setMuted(on: boolean): void {
+  state.muted = on;
+  apply();
 }

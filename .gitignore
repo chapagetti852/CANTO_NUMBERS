@@ -7,3 +7,4 @@ dist/
 assets-incoming/
 .playtest/
 audio-test/
+!.env.production

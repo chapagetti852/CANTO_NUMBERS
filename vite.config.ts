@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import pkg from './package.json' with { type: 'json' };
 import { defineConfig, type Plugin } from 'vite';
 
 const REVIEW_FILE = 'scripts/clip-review.json';
@@ -35,11 +36,15 @@ function clipReview(): Plugin {
 }
 
 export default defineConfig({
-  base: './',
+  base: './', // relative paths: works at username.github.io/CANTO_NUMBERS/
   plugins: [clipReview()],
+  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   build: {
     outDir: 'dist',
-    rollupOptions: { output: { manualChunks: { phaser: ['phaser'] } } },
+    chunkSizeWarningLimit: 1600, // Phaser alone is ~1.4 MB minified (~360 KB gzipped)
+    // Phaser in its own chunk so it stays cached when only game code changes.
+    // (Vite 8 / rolldown only accepts the function form.)
+    rollupOptions: { output: { manualChunks: (id: string) => (id.includes('node_modules/phaser') ? 'phaser' : undefined) } },
   },
   server: {
     port: 5173,

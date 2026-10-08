@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { setupCamera, WIDTH } from '../view';
 import { hideBar } from '../answerBar';
-import { playMusic } from '../sound';
+import { playMusic, setMuted } from '../sound';
 import { HEX, PAL, save, state, type Mode } from '../state';
 import { confettiBackground, text } from '../ui';
 
@@ -43,7 +43,7 @@ export class MenuScene extends Phaser.Scene {
     MODES.forEach((m, i) => this.card(cx, 230 + i * 150, m));
 
     // Answer input setting (Read mode).
-    const input = text(this, cx, 528, '', 11, HEX.rose).setInteractive({ useHandCursor: true });
+    const input = text(this, cx, 526, '', 11, HEX.rose).setInteractive({ useHandCursor: true });
     const refresh = () => input.setText(`read answers: ${state.tiles ? 'tap tiles' : 'type'}  ⇄`);
     input.on('pointerdown', () => {
       state.tiles = !state.tiles;
@@ -51,7 +51,17 @@ export class MenuScene extends Phaser.Scene {
       refresh();
     });
     refresh();
-    text(this, cx, 566, 'new here? start with read, level 1', 9, HEX.dim);
+    const sound = text(this, cx, 552, '', 11, HEX.rose).setInteractive({ useHandCursor: true });
+    const refreshSound = () => sound.setText(`music & sfx: ${state.muted ? 'off' : 'on'}  ⇄`);
+    sound.on('pointerdown', () => {
+      setMuted(!state.muted);
+      save();
+      refreshSound();
+    });
+    refreshSound();
+    text(this, cx, 580, 'new here? start with read, level 1', 9, HEX.dim);
+    text(this, WIDTH - 8, 594, `v${__APP_VERSION__}`, 8, HEX.dim).setOrigin(1, 0.5);
+    document.getElementById('loading')?.remove();
 
     this.input.keyboard?.on('keydown-L', () => this.pick('listen'));
     this.input.keyboard?.on('keydown-R', () => this.pick('read'));

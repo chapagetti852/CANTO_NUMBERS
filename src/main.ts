@@ -21,4 +21,5 @@ const game = new Phaser.Game({
   scene: [BootScene, MenuScene, LevelsScene, GameScene, ResultsScene],
 });
 
-if (import.meta.env.DEV) (window as any).__PHASER_GAME__ = game;
+// Exposed for the playtest harness: dev server, or a gate build made with VITE_PLAYTEST=1.
+if (import.meta.env.DEV || import.meta.env.VITE_PLAYTEST) (window as any).__PHASER_GAME__ = game;

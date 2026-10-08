@@ -4,8 +4,8 @@ import { clearInput, setLocked, showBar } from '../answerBar';
 import { playMusic, sfx } from '../sound';
 import { hasClip, hasClips, speak, stop } from '../audio';
 import { COLORS, HEX, PAL, state } from '../state';
-import { checkYale, normalizeYale, parseDigits, type YaleVerdict } from '../yale/check';
-import { pool, randomItem, type Item } from '../yale/items';
+import { checkYale, normalizeYale, parseDigits, parseNumber, type YaleVerdict } from '../yale/check';
+import { LEVELS, pool, randomItem, type Item } from '../yale/items';
 import { confettiBackground, FONT_ZH, text } from '../ui';
 
 const ROUND_MS = 60_000;
@@ -49,7 +49,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private get rate(): number {
-    return state.level === 5 ? 1.3 : 1;
+    return LEVELS.find((l) => l.level === state.level)?.fast ? 1.3 : 1;
   }
 
   create(): void {
@@ -120,15 +120,25 @@ export class GameScene extends Phaser.Scene {
     this.reveal.setText('');
     this.prompt.setColor(HEX.ink).setScale(0.4).setAlpha(1);
     if (this.listen) {
-      this.prompt.setText('▶ ? ? ?');
+      this.setPrompt('▶ ? ? ?');
       this.tag.setText('listen');
       speak(it, this.rate);
     } else {
-      this.prompt.setText(it.display);
-      this.tag.setText(it.form === 'contracted' ? '★ contracted ★' : 'full form');
+      this.setPrompt(it.display);
+      // The tag only matters when a number has both forms (big numbers, decimals: no tag).
+      this.tag.setText(it.form === 'contracted' ? '★ contracted ★' : it.alt ? 'full form' : '');
       this.tag.setColor(it.form === 'contracted' ? HEX.rose : HEX.ink);
     }
     this.tweens.add({ targets: this.prompt, scale: 1, duration: 220, ease: 'Back.Out' });
+  }
+
+  /** Big numbers (123,456,789) shrink to fit the screen width. */
+  private setPrompt(s: string): Phaser.GameObjects.Text {
+    const max = WIDTH - 24;
+    let size = 56;
+    this.prompt.setText(s).setFontSize(size);
+    while (this.prompt.width > max && size > 16) this.prompt.setFontSize((size -= 2));
+    return this.prompt;
   }
 
   private submit(raw: string): void {
@@ -141,9 +151,8 @@ export class GameScene extends Phaser.Scene {
     }
     let verdict: YaleVerdict;
     if (this.listen) {
-      const p = parseDigits(value);
-      const target = this.item.money ? this.item.value : this.item.value * 10;
-      verdict = p === target ? 'correct' : 'wrong';
+      const ok = this.item.money ? parseDigits(value) === this.item.value : parseNumber(value) === this.item.value;
+      verdict = ok ? 'correct' : 'wrong';
     } else {
       verdict = checkYale(value, this.item.answers);
     }
@@ -175,7 +184,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (this.listen) {
-      this.prompt.setText(this.item.display).setColor(HEX.gold);
+      this.setPrompt(this.item.display).setColor(HEX.gold);
       this.reveal.setText(this.item.answers[0]);
     }
     clearInput();
@@ -198,7 +207,7 @@ export class GameScene extends Phaser.Scene {
     this.prompt.setColor(HEX.red);
     this.tweens.add({ targets: this.prompt, x: '+=6', duration: 30, yoyo: true, repeat: 5 });
     if (this.listen) {
-      this.prompt.setText(this.item.display);
+      this.setPrompt(this.item.display);
       speak(this.item, 1);
     }
 

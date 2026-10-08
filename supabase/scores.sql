@@ -4,7 +4,7 @@ create table if not exists public.scores (
   id bigint generated always as identity primary key,
   name text not null check (char_length(name) between 1 and 16),
   mode text not null check (mode in ('listen', 'read')),
-  level int not null check (level between 1 and 5),
+  level int not null check (level between 1 and 7),
   score int not null check (score between 1 and 10000),
   correct int not null default 0 check (correct between 0 and 500),
   created_at timestamptz not null default now()

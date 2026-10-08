@@ -1,7 +1,7 @@
 // Question generation per level. Pools are deterministic so the Azure audio
 // script and the game agree on which clips exist.
 import {
-  contractedForms, formatMoney, fullForms, moneyContracted, moneyFull, type Reading,
+  contractedForms, decimalForm, formatMoney, fullForms, moneyContracted, moneyFull, percentForms, type Reading,
 } from './numbers';
 
 export type Form = 'full' | 'contracted';
@@ -9,8 +9,9 @@ export type Form = 'full' | 'contracted';
 export interface Item {
   id: string;           // also the audio clip filename
   display: string;      // "38" or "$3.20"
-  value: number;        // the number, or hòuh for money
+  value: number;        // the number (may be a decimal), or hòuh for money
   money: boolean;
+  percent?: boolean;
   form: Form;
   answers: string[];    // accepted Yale, canonical first
   tts: string;          // Chinese text for Azure (may contain SSML tags like <break>)
@@ -18,11 +19,13 @@ export interface Item {
 }
 
 export const LEVELS = [
-  { level: 1, name: 'Numbers 0–99', example: '38 → sāam sahp baat' },
-  { level: 2, name: 'Short forms', example: '38 → sā-ah baat' },
-  { level: 3, name: 'Prices & hundreds', example: '$2 → léuhng mān' },
-  { level: 4, name: 'Dollars & cents', example: '$3.20 → sāam go yih' },
-  { level: 5, name: 'Mix it up, fast', example: 'everything · 1.3× speed' },
+  { level: 1, name: 'Numbers 0–99', example: '38 → sāam sahp baat', fast: false },
+  { level: 2, name: 'Short forms', example: '38 → sā-ah baat', fast: false },
+  { level: 3, name: 'Prices & hundreds', example: '$2 → léuhng mān', fast: false },
+  { level: 4, name: 'Dollars & cents', example: '$3.20 → sāam go yih', fast: false },
+  { level: 5, name: 'Big numbers', example: '20,000 → léuhng maahn', fast: false },
+  { level: 6, name: 'Decimals & %', example: '0.27 → lìhng dím yih chāt', fast: false },
+  { level: 7, name: 'Mix it up, fast', example: 'everything · 1.3× speed', fast: true },
 ] as const;
 
 function make(value: number, money: boolean, form: Form): Item | null {
@@ -42,6 +45,21 @@ function make(value: number, money: boolean, form: Form): Item | null {
     answers: readings.map((r) => r.yale),
     tts: readings[0].zh,
     alt: other[0]?.yale,
+  };
+}
+
+/** Decimal ("0.273") or percent ("12.5", shown as 12.5%). Always full form. */
+function makeDecimal(s: string, percent: boolean): Item {
+  const readings = percent ? percentForms(s) : [decimalForm(s)];
+  return {
+    id: `${percent ? 'p' : 'n'}${s.replace('.', '_')}-f`,
+    display: percent ? `${s}%` : s,
+    value: Number(s),
+    money: false,
+    percent,
+    form: 'full',
+    answers: readings.map((r) => r.yale),
+    tts: readings[0].zh,
   };
 }
 
@@ -80,11 +98,32 @@ const GEN: Record<number, (r: () => number) => Item | null> = {
     return make(hauh, true, r() < 0.6 ? 'contracted' : 'full');
   },
   5: (r) => {
+    // Big numbers: realistic round amounts (flats, salaries, populations) and long random ones.
+    const roll = r();
+    const d = () => pick(r, range(1, 9));
+    let n: number;
+    if (roll < 0.3) n = pick(r, range(10, 999)) * 1000;                    // 34,000 · 850,000
+    else if (roll < 0.55) n = (d() * 100 + d() * 10) * 10000;               // 6,800,000
+    else if (roll < 0.7) n = d() * 1e8 + pick(r, [0, d() * 1e7, d() * 1e6]); // 3 億, 1.2 億
+    else if (roll < 0.9) n = pick(r, range(10001, 999999));                // 487,316
+    else n = pick(r, range(1000001, 99999999));                            // 23,456,789
+    return make(n, false, 'full');
+  },
+  6: (r) => {
+    // Decimals (each digit read on its own after dím) and percentages (百分之).
+    const digits = (k: number) => Array.from({ length: k }, (_, j) => (j === k - 1 ? pick(r, range(1, 9)) : pick(r, range(0, 9)))).join('');
+    const roll = r();
+    if (roll < 0.25) return makeDecimal(`0.${digits(pick(r, [1, 2, 3]))}`, false);       // 0.273
+    if (roll < 0.5) return makeDecimal(`${pick(r, range(1, 99))}.${digits(pick(r, [1, 2]))}`, false); // 3.14
+    if (roll < 0.8) return makeDecimal(String(pick(r, [5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 100, pick(r, range(1, 99))])), true); // 25%
+    return makeDecimal(`${pick(r, range(1, 20))}.${pick(r, range(1, 9))}`, true);         // 3.5%
+  },
+  7: (r) => {
     if (r() < 0.3) {
       const n = pick(r, range(1, 9)) * 10000 + pick(r, range(0, 9)) * 1000;
       return make(r() < 0.5 ? n : pick(r, range(11, 99)) * 10000, false, r() < 0.5 ? 'contracted' : 'full');
     }
-    return GEN[pick(r, [2, 3, 4])](r);
+    return GEN[pick(r, [2, 3, 4, 5, 6])](r);
   },
 };
 

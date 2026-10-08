@@ -6,7 +6,7 @@ import { HEX, PAL, save, state } from '../state';
 import { LEVELS } from '../yale/items';
 import { confettiBackground, labelColor, text } from '../ui';
 
-const FILLS = [PAL.red, PAL.white, PAL.gold, PAL.rose, PAL.coral];
+const FILLS = [PAL.red, PAL.white, PAL.gold, PAL.rose, PAL.coral, PAL.white, PAL.red];
 
 /** Step 2: pick a level for the chosen mode. */
 export class LevelsScene extends Phaser.Scene {
@@ -28,23 +28,23 @@ export class LevelsScene extends Phaser.Scene {
     text(this, cx, 62, listen ? 'hear a number, type the digits' : 'see a number, write it in yale', 12, HEX.ink, true);
 
     LEVELS.forEach((l, i) => {
-      const y = 126 + i * 78;
+      const y = 112 + i * 62;
       const fill = FILLS[i];
-      this.add.rectangle(cx + 4, y + 4, 300, 64, 0x000000, 0.5);
-      const row = this.add.rectangle(cx, y, 300, 64, PAL.track).setInteractive({ useHandCursor: true });
-      this.add.rectangle(cx - 150 + 28, y, 56, 64, fill);
-      text(this, cx - 150 + 28, y, String(l.level), 26, labelColor(fill)).setStroke(HEX.bg, 0);
-      text(this, cx - 150 + 70, y - 12, l.name, 13, HEX.ink).setOrigin(0, 0.5);
-      text(this, cx - 150 + 70, y + 12, l.example, 13, HEX.dim, true).setOrigin(0, 0.5);
+      this.add.rectangle(cx + 4, y + 4, 300, 54, 0x000000, 0.5);
+      const row = this.add.rectangle(cx, y, 300, 54, PAL.track).setInteractive({ useHandCursor: true });
+      this.add.rectangle(cx - 150 + 24, y, 48, 54, fill);
+      text(this, cx - 150 + 24, y, String(l.level), 22, labelColor(fill)).setStroke(HEX.bg, 0);
+      text(this, cx - 150 + 60, y - 11, l.name, 12, HEX.ink).setOrigin(0, 0.5);
+      text(this, cx - 150 + 60, y + 11, l.example, 11, HEX.dim, true).setOrigin(0, 0.5);
       const best = state.best[`${state.mode}-${l.level}`];
-      if (best) text(this, cx + 142, y - 22, `best ${best}`, 8, HEX.gold).setOrigin(1, 0.5);
+      if (best) text(this, cx + 144, y - 19, `best ${best}`, 8, HEX.gold).setOrigin(1, 0.5);
       row.on('pointerover', () => row.setFillStyle(PAL.deep));
       row.on('pointerout', () => row.setFillStyle(PAL.track));
       row.on('pointerdown', () => this.start(l.level));
     });
 
-    text(this, cx, 528, 'each round is 60 seconds', 10, HEX.dim);
-    text(this, cx, 550, 'wrong answers pause the clock so you can learn', 9, HEX.dim);
+    text(this, cx, 560, 'each round is 60 seconds', 10, HEX.dim);
+    text(this, cx, 580, 'wrong answers pause the clock so you can learn', 9, HEX.dim);
 
     this.input.keyboard?.on('keydown', (e: KeyboardEvent) => {
       const n = Number(e.key);

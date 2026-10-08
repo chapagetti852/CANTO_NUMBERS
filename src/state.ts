@@ -8,14 +8,30 @@ interface Saved {
   tiles: boolean;        // syllable tile keyboard in Read mode (else type)
   name: string;
   best: Record<string, number>; // "listen-3" → score
+  v?: number;                    // save format version
 }
 
 const KEY = 'canto-numbers-v1';
 
 function load(): Saved {
-  const fallback: Saved = { mode: 'read', level: 1, tiles: true, name: '', best: {} };
+  const fallback: Saved = { mode: 'read', level: 1, tiles: true, name: '', best: {}, v: 2 };
   try {
-    return { ...fallback, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') };
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return fallback;
+    const saved = JSON.parse(raw) as Partial<Saved>;
+    // v1 → v2: "Mix it up" moved from level 5 to level 7 (Big numbers and Decimals are now 5 and 6).
+    if (!saved.v) {
+      for (const mode of ['listen', 'read']) {
+        const old = saved.best?.[`${mode}-5`];
+        if (old !== undefined && saved.best) {
+          saved.best[`${mode}-7`] = old;
+          delete saved.best[`${mode}-5`];
+        }
+      }
+      if (saved.level === 5) saved.level = 7;
+      saved.v = 2;
+    }
+    return { ...fallback, ...saved };
   } catch {
     return fallback;
   }

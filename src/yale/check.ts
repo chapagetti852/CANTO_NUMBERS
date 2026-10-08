@@ -30,6 +30,12 @@ export function parseDigits(input: string): number | null {
   return Math.round(parseFloat(s) * 10);
 }
 
+/** Plain number for Listen mode. Accepts "1,500", "0.273", "12.5%". */
+export function parseNumber(input: string): number | null {
+  const s = input.replace(/[,\s%]/g, '');
+  return /^\d+(\.\d+)?$/.test(s) ? Number(s) : null;
+}
+
 // ---------------------------------------------------------------------------
 // Tone buttons. Yale marks the first vowel of the syllable; low tones (4–6) add
 // an "h" after the vowel cluster: sāam, gáu, sei, yàuh, ńgh, luhk.

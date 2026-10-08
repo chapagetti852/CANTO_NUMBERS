@@ -57,7 +57,9 @@ function fullSection(n: number, leading: boolean): Reading {
       yale.push('sahp');
       zh += '十';
     } else if (i < 2) {
-      const w = twoWord(p.d);
+      // 兩 léuhng for a leading 2 (léuhng baak); mid-number 二 yih (yāt chīn yih baak).
+      // Both are accepted as answers (see fullForms).
+      const w = !started && leading ? twoWord(p.d) : { yale: YALE_DIGITS[p.d], zh: ZH_DIGITS[p.d] };
       yale.push(w.yale, p.y);
       zh += w.zh + p.z;
     } else {
@@ -73,21 +75,49 @@ function fullSection(n: number, leading: boolean): Reading {
   return { yale: yale.join(' '), zh };
 }
 
-/** Full form, 0 ≤ n ≤ 99,999,999. */
-export function fullForm(n: number): Reading {
-  if (n < 10000) return fullSection(n, true);
-  const high = Math.floor(n / 10000);
-  const low = n % 10000;
-  const h = high === 2 ? twoWord(2) : fullSection(high, true);
-  let yale = `${h.yale} maahn`;
-  let zh = `${h.zh}萬`;
+/**
+ * One big unit (萬 maahn = 10⁴, 億 yīk = 10⁸): "<head> <unit> [lìhng] <rest>".
+ * A lìhng marks a gap when the rest doesn't fill the next-lower place (1,0500 → yāt maahn lìhng ńgh baak).
+ */
+function withUnit(n: number, size: number, unit: Reading, leading: boolean, below: (n: number, leading: boolean) => Reading): Reading {
+  const high = Math.floor(n / size);
+  const low = n % size;
+  const h = high === 2 && leading ? twoWord(2) : fullSection(high, leading);
+  let yale = `${h.yale} ${unit.yale}`;
+  let zh = h.zh + unit.zh;
   if (low > 0) {
-    const l = fullSection(low, false);
-    const gap = low < 1000;
+    const l = below(low, false);
+    const gap = low < size / 10;
     yale += (gap ? ` ${YALE_DIGITS[0]} ` : ' ') + l.yale;
     zh += (gap ? ZH_DIGITS[0] : '') + l.zh;
   }
   return { yale, zh };
+}
+
+function under1e8(n: number, leading: boolean): Reading {
+  return n < 1e4 ? fullSection(n, leading) : withUnit(n, 1e4, { yale: 'maahn', zh: '萬' }, leading, fullSection);
+}
+
+/** Full form, 0 ≤ n < 10¹² (up to 9999 億). */
+export function fullForm(n: number): Reading {
+  return n < 1e8 ? under1e8(n, true) : withUnit(n, 1e8, { yale: 'yīk', zh: '億' }, true, under1e8);
+}
+
+/** Decimal: integer part, 點 dím, then each digit on its own (2 is yih here). 0.273 → lìhng dím yih chāt sāam */
+export function decimalForm(s: string): Reading {
+  const [int, frac] = s.split('.');
+  const i = fullForm(Number(int));
+  const digits = [...frac].map(Number);
+  return {
+    yale: `${i.yale} dím ${digits.map((d) => YALE_DIGITS[d]).join(' ')}`,
+    zh: `${i.zh}點${digits.map((d) => ZH_DIGITS[d]).join('')}`,
+  };
+}
+
+/** Percent: 百分之 baak fahn jī + the number. 12.5% → baak fahn jī sahp yih dím ńgh */
+export function percentForms(s: string): Reading[] {
+  const nums = s.includes('.') ? [decimalForm(s)] : fullForms(Number(s));
+  return nums.map((r) => ({ yale: `baak fahn jī ${r.yale}`, zh: `百分之${r.zh}` }));
 }
 
 /**
@@ -127,12 +157,24 @@ export function contractedForms(n: number): Reading[] {
   return [];
 }
 
-/** Accepted full-form variants (yih in place of léuhng before baak/chīn is heard too). */
+/**
+ * Accepted full-form variants: before baak / chīn / maahn / yīk, both léuhng and yih are heard,
+ * so every combination is accepted (canonical first).
+ */
 export function fullForms(n: number): Reading[] {
   const canonical = fullForm(n);
+  const words = canonical.yale.split(' ');
+  const spots = words
+    .map((w, i) => ((w === 'léuhng' || w === 'yih') && /^(baak|chīn|maahn|yīk)$/.test(words[i + 1] ?? '') ? i : -1))
+    .filter((i) => i >= 0)
+    .slice(0, 4);
   const out = [canonical];
-  if (/^léuhng (baak|chīn)/.test(canonical.yale)) {
-    out.push({ yale: canonical.yale.replace(/^léuhng/, 'yih'), zh: canonical.zh.replace(/^兩/, '二') });
+  for (let mask = 1; mask < 1 << spots.length; mask++) {
+    const v = [...words];
+    spots.forEach((s, b) => {
+      if (mask & (1 << b)) v[s] = v[s] === 'léuhng' ? 'yih' : 'léuhng';
+    });
+    out.push({ yale: v.join(' '), zh: canonical.zh });
   }
   return out;
 }

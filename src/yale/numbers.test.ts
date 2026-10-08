@@ -1,8 +1,8 @@
 // The answer key's ground truth. When your teacher corrects something, fix it here
 // first, then make numbers.ts pass.
 import { describe, expect, it } from 'vitest';
-import { contractedForms, fullForm, moneyContracted, moneyFull, formatMoney } from './numbers';
-import { applyTone, checkYale, parseDigits } from './check';
+import { contractedForms, decimalForm, fullForm, fullForms, moneyContracted, moneyFull, formatMoney, percentForms } from './numbers';
+import { applyTone, checkYale, parseDigits, parseNumber } from './check';
 
 const full = (n: number) => fullForm(n).yale;
 const con = (n: number) => contractedForms(n).map((r) => r.yale);
@@ -23,11 +23,30 @@ describe('full form', () => {
     [1500, 'yāt chīn ńgh baak'],
     [2000, 'léuhng chīn'],
     [10000, 'yāt maahn'],
-    [12000, 'yāt maahn léuhng chīn'],
+    [12000, 'yāt maahn yih chīn'],
+    [1200, 'yāt chīn yih baak'],
     [20000, 'léuhng maahn'],
     [150000, 'sahp ńgh maahn'],
     [10500, 'yāt maahn lìhng ńgh baak'],
   ])('%i → %s', (n, yale) => expect(full(n)).toBe(yale));
+
+  it.each([
+    [100000000, 'yāt yīk'],
+    [200000000, 'léuhng yīk'],
+    [120000000, 'yāt yīk yih chīn maahn'],
+    [100050000, 'yāt yīk lìhng ńgh maahn'],
+    [100005000, 'yāt yīk lìhng ńgh chīn'],
+    [6800000, 'luhk baak baat sahp maahn'],
+    [20000000, 'léuhng chīn maahn'],
+    [123456789, 'yāt yīk yih chīn sāam baak sei sahp ńgh maahn luhk chīn chāt baak baat sahp gáu'],
+  ])('big: %i → %s', (n, yale) => expect(full(n)).toBe(yale));
+
+  it('accepts léuhng and yih before units', () => {
+    const v = fullForms(1200).map((r) => r.yale);
+    expect(v).toContain('yāt chīn yih baak');
+    expect(v).toContain('yāt chīn léuhng baak');
+    expect(fullForms(22).map((r) => r.yale)).toEqual(['yih sahp yih']); // never léuhng sahp
+  });
 
   it('builds TTS text', () => {
     expect(fullForm(105).zh).toBe('一百零五');
@@ -48,6 +67,21 @@ describe('contracted form', () => {
   ])('%i → %j', (n, forms) => expect(con(n)).toEqual(forms));
 
   it.each([20, 30, 15, 105, 125, 7])('%i has no contracted form', (n) => expect(con(n)).toEqual([]));
+});
+
+describe('decimals and percent', () => {
+  it.each([
+    ['0.273', 'lìhng dím yih chāt sāam', '零點二七三'],
+    ['3.14', 'sāam dím yāt sei', '三點一四'],
+    ['2.5', 'yih dím ńgh', '二點五'],
+    ['10.05', 'sahp dím lìhng ńgh', '十點零五'],
+  ])('%s → %s', (s, yale, zh) => expect(decimalForm(s)).toEqual({ yale, zh }));
+
+  it('percent', () => {
+    expect(percentForms('50')[0].yale).toBe('baak fahn jī ńgh sahp');
+    expect(percentForms('12.5')[0]).toEqual({ yale: 'baak fahn jī sahp yih dím ńgh', zh: '百分之十二點五' });
+    expect(percentForms('100')[0].yale).toBe('baak fahn jī yāt baak');
+  });
 });
 
 describe('money', () => {
@@ -89,6 +123,9 @@ describe('checking', () => {
     expect(parseDigits('3.2')).toBe(32);
     expect(parseDigits('1,500')).toBe(15000);
     expect(parseDigits('abc')).toBeNull();
+    expect(parseNumber('0.273')).toBe(0.273);
+    expect(parseNumber('12.5%')).toBe(12.5);
+    expect(parseNumber('6,800,000')).toBe(6800000);
   });
 });
 
@@ -104,5 +141,9 @@ describe('tone buttons', () => {
     ['m', 4, 'm̀h'],
     ['sāam sap', 6, 'sāam sahp'],
     ['yàuh', 1, 'yāu'],
+    ['dim', 2, 'dím'],
+    ['fan', 6, 'fahn'],
+    ['ji', 1, 'jī'],
+    ['yik', 1, 'yīk'],
   ])('%s + tone %i → %s', (text, tone, out) => expect(applyTone(text, tone)).toBe(out.normalize('NFC')));
 });

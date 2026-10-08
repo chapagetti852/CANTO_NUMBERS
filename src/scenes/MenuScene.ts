@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { setupCamera, WIDTH } from '../view';
 import { hideBar } from '../answerBar';
 import { COLORS, HEX, save, state, type Mode } from '../state';
 import { LEVELS } from '../yale/items';
@@ -11,7 +12,8 @@ export class MenuScene extends Phaser.Scene {
 
   create(): void {
     hideBar();
-    const cx = this.scale.width / 2;
+    setupCamera(this);
+    const cx = WIDTH / 2;
     confettiBackground(this);
 
     // Title with per-letter colour cycling.

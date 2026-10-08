@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { setupCamera, shake, WIDTH, ZOOM } from '../view';
 import { clearInput, setLocked, showBar } from '../answerBar';
 import { hasClip, hasClips, speak, stop } from '../audio';
 import { COLORS, HEX, state } from '../state';
@@ -50,7 +51,8 @@ export class GameScene extends Phaser.Scene {
     Object.assign(this, {
       recent: [], score: 0, streak: 0, correct: 0, answered: 0, timeLeft: ROUND_MS, paused: false, over: false,
     });
-    const { width: w } = this.scale;
+    setupCamera(this);
+    const w = WIDTH;
     const cx = w / 2;
 
     this.bg = confettiBackground(this);
@@ -156,7 +158,7 @@ export class GameScene extends Phaser.Scene {
     const { x, y } = this.prompt;
     this.burst.explode(40 + Math.min(this.streak, 20) * 8, x, y);
     this.cameras.main.flash(80, 255, 255, 255);
-    if (this.streak >= 5) this.cameras.main.shake(120, 0.004 + this.streak * 0.0006);
+    if (this.streak >= 5) shake(this, 120, Math.min(6, 1 + this.streak * 0.25));
     this.bg.frequency = Math.max(8, 60 - this.streak * 5);
     this.popup(Phaser.Utils.Array.GetRandom(GOOD), true);
     this.floatText(`+${gained}`, HEX.yellow);
@@ -177,7 +179,7 @@ export class GameScene extends Phaser.Scene {
     this.streak = 0;
     this.streakText.setText('');
     this.bg.frequency = 60;
-    this.cameras.main.shake(200, 0.015);
+    shake(this, 200, 5);
     this.cameras.main.flash(120, 255, 0, 60);
     this.popup(Phaser.Utils.Array.GetRandom(verdict === 'tone' ? TONE : BAD), false);
 
@@ -200,11 +202,11 @@ export class GameScene extends Phaser.Scene {
 
   /** Chinese phrase + Yale, flung out of the prompt. */
   private popup([zh, yale]: string[], good: boolean): void {
-    const x = Phaser.Math.Between(70, this.scale.width - 70);
+    const x = Phaser.Math.Between(70, WIDTH - 70);
     const y = good ? Phaser.Math.Between(110, 160) : Phaser.Math.Between(430, 450);
     const color = Phaser.Utils.Array.GetRandom(good ? [HEX.lime, HEX.yellow, HEX.cyan] : [HEX.hot]);
     const z = this.add.text(x, y, zh, {
-      fontFamily: FONT_ZH, fontSize: '32px', color, stroke: '#0b0b1a', strokeThickness: 6,
+      fontFamily: FONT_ZH, fontSize: '32px', color, stroke: '#0b0b1a', strokeThickness: 6, resolution: ZOOM,
     }).setOrigin(0.5).setDepth(10);
     const r = text(this, x, y + 28, yale, 14, color, true).setDepth(10);
     const angle = Phaser.Math.Between(-18, 18);

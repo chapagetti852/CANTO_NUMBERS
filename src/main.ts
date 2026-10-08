@@ -3,15 +3,13 @@ import { BootScene } from './scenes/BootScene';
 import { MenuScene } from './scenes/MenuScene';
 import { GameScene } from './scenes/GameScene';
 import { ResultsScene } from './scenes/ResultsScene';
-
-export const WIDTH = 360;
-export const HEIGHT = 600;
+import { HEIGHT, WIDTH, ZOOM } from './view';
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game-container',
-  width: WIDTH,
-  height: HEIGHT,
+  width: WIDTH * ZOOM,
+  height: HEIGHT * ZOOM,
   backgroundColor: '#0b0b1a',
   pixelArt: true,
   scale: {

@@ -1,6 +1,7 @@
 // Small shared helpers for pixel text, buttons and the background confetti.
 import Phaser from 'phaser';
 import { COLORS, HEX } from './state';
+import { HEIGHT, WIDTH, ZOOM } from './view';
 
 export const FONT = 'Silkscreen, monospace';
 /** Silkscreen lacks ā and ń, so anything in Yale uses Pixelify Sans. */
@@ -20,6 +21,7 @@ export function text(
       stroke: '#0b0b1a',
       strokeThickness: Math.max(2, size / 6),
       align: 'center',
+      resolution: ZOOM,
     })
     .setOrigin(0.5);
 }
@@ -42,7 +44,8 @@ export function button(
 
 /** Endless drifting pixels behind everything. Returns the emitter so callers can speed it up. */
 export function confettiBackground(scene: Phaser.Scene): Phaser.GameObjects.Particles.ParticleEmitter {
-  const { width, height } = scene.scale.gameSize;
+  const width = WIDTH;
+  const height = HEIGHT;
   return scene.add
     .particles(0, 0, 'px', {
       x: { min: 0, max: width },

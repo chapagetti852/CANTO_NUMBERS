@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { setupCamera, WIDTH } from '../view';
 import { hideBar } from '../answerBar';
 import { COLORS, HEX, recordBest, state } from '../state';
 import { button, confettiBackground, text } from '../ui';
@@ -16,7 +17,8 @@ export class ResultsScene extends Phaser.Scene {
 
   create(r: Result): void {
     hideBar();
-    const cx = this.scale.width / 2;
+    setupCamera(this);
+    const cx = WIDTH / 2;
     confettiBackground(this);
     const best = recordBest(r.score);
 

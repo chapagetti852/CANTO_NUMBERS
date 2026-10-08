@@ -1,6 +1,6 @@
 // Small shared helpers for pixel text, buttons and the background confetti.
 import Phaser from 'phaser';
-import { COLORS, HEX } from './state';
+import { COLORS, HEX, PAL } from './state';
 import { HEIGHT, WIDTH, ZOOM } from './view';
 
 export const FONT = 'Silkscreen, monospace';
@@ -66,4 +66,56 @@ export function confettiBackground(scene: Phaser.Scene): Phaser.GameObjects.Part
       tint: COLORS,
     })
     .setDepth(-10);
+}
+
+/**
+ * Draws the eye to a card: a light sheen sweeping across, pixel sparkles twinkling at random
+ * spots on its border, and a breathing gold outline. Steers brand-new players to their first step.
+ */
+export function glisten(scene: Phaser.Scene, cx: number, cy: number, w: number, h: number): void {
+  const left = cx - w / 2 + 12;
+  const right = cx + w / 2 - 12;
+  const band = [
+    scene.add.rectangle(left, cy, 16, h - 10, 0xffffff, 0.12),
+    scene.add.rectangle(left, cy, 5, h - 10, 0xffffff, 0.28),
+  ].map((r) => r.setDepth(1).setAlpha(0));
+  scene.tweens.add({
+    targets: band,
+    x: right,
+    duration: 900,
+    ease: 'Sine.InOut',
+    repeat: -1,
+    repeatDelay: 1300,
+    onRepeat: () => band.forEach((b) => b.setX(left)),
+    onUpdate: (tw) => band.forEach((b) => b.setAlpha(Math.sin(tw.progress * Math.PI))),
+  });
+
+  const outline = scene.add.rectangle(cx, cy, w + 12, h + 12).setStrokeStyle(3, PAL.gold).setDepth(3);
+  scene.tweens.add({ targets: outline, alpha: { from: 0.15, to: 0.95 }, scale: { from: 1, to: 1.015 }, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+
+  // Random points on the border (Phaser's edge zone walks the perimeter in order instead).
+  const bx = cx - w / 2 - 6;
+  const by = cy - h / 2 - 6;
+  const bw = w + 12;
+  const bh = h + 12;
+  const border = {
+    getRandomPoint(p: Phaser.Types.Math.Vector2Like) {
+      let d = Math.random() * 2 * (bw + bh);
+      if (d < bw) return Object.assign(p, { x: bx + d, y: by });
+      d -= bw;
+      if (d < bh) return Object.assign(p, { x: bx + bw, y: by + d });
+      d -= bh;
+      if (d < bw) return Object.assign(p, { x: bx + bw - d, y: by + bh });
+      return Object.assign(p, { x: bx, y: by + bh - (d - bw) });
+    },
+  };
+  scene.add.particles(0, 0, 'px', {
+    emitZone: { type: 'random', source: border },
+    frequency: 45,
+    lifespan: 650,
+    scale: { start: 1.6, end: 0 },
+    alpha: { start: 1, end: 0 },
+    speed: { min: 0, max: 14 },
+    tint: [PAL.white, PAL.gold],
+  }).setDepth(3);
 }

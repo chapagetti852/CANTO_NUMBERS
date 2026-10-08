@@ -48,6 +48,11 @@ export function save(): void {
   }
 }
 
+/** Hasn't finished a round yet: steer them to Listen, level 1. */
+export function isNewPlayer(): boolean {
+  return Object.keys(state.best).length === 0;
+}
+
 /** Records a score; returns true if it beat the previous best. */
 export function recordBest(score: number): boolean {
   const k = `${state.mode}-${state.level}`;

@@ -2,8 +2,8 @@ import Phaser from 'phaser';
 import { setupCamera, WIDTH } from '../view';
 import { hideBar, touch } from '../answerBar';
 import { playMusic, setMuted } from '../sound';
-import { HEX, PAL, save, state, type Mode } from '../state';
-import { confettiBackground, text } from '../ui';
+import { HEX, isNewPlayer, PAL, save, state, type Mode } from '../state';
+import { confettiBackground, glisten, text } from '../ui';
 
 const TITLE = [HEX.red, HEX.ink, HEX.gold, HEX.rose];
 
@@ -61,7 +61,7 @@ export class MenuScene extends Phaser.Scene {
       refreshSound();
     });
     refreshSound();
-    text(this, cx, 580, 'new here? start with read, level 1', 9, HEX.dim);
+    text(this, cx, 580, 'new here? start with listen, level 1', 9, HEX.dim);
     text(this, WIDTH - 8, 594, `v${__APP_VERSION__}`, 8, HEX.dim).setOrigin(1, 0.5);
     document.getElementById('loading')?.remove();
 
@@ -80,9 +80,14 @@ export class MenuScene extends Phaser.Scene {
       text(this, cx, y + 4, m.line, 13, HEX.ink, true),
       text(this, cx, y + 34, m.example, 13, HEX.dim, true),
     ];
-    box.on('pointerover', () => parts.forEach((p) => p.setScale(1.03)));
-    box.on('pointerout', () => parts.forEach((p) => p.setScale(1)));
+    parts.slice(1).forEach((p) => p.setDepth(2));
     box.on('pointerdown', () => this.pick(m.mode));
+    if (m.mode === 'listen' && isNewPlayer()) {
+      glisten(this, cx, y, w, h);
+    } else {
+      box.on('pointerover', () => parts.forEach((p) => p.setScale(1.03)));
+      box.on('pointerout', () => parts.forEach((p) => p.setScale(1)));
+    }
   }
 
   private pick(mode: Mode): void {

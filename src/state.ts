@@ -6,13 +6,14 @@ interface Saved {
   mode: Mode;
   level: number;
   toneButtons: boolean;
+  name: string;
   best: Record<string, number>; // "listen-3" → score
 }
 
 const KEY = 'canto-numbers-v1';
 
 function load(): Saved {
-  const fallback: Saved = { mode: 'read', level: 1, toneButtons: true, best: {} };
+  const fallback: Saved = { mode: 'read', level: 1, toneButtons: true, name: '', best: {} };
   try {
     return { ...fallback, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') };
   } catch {

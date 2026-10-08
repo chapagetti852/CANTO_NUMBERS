@@ -111,6 +111,27 @@
         line-height: 1;
       }
       #tones button small { display: block; font: 400 9px 'Silkscreen', monospace; opacity: .8; margin-top: 3px; }
+      #name-bar {
+        display: none;
+        padding: 8px 12px calc(10px + env(safe-area-inset-bottom));
+        background: var(--panel);
+        border-top: 4px solid var(--gold);
+      }
+      #name-bar.on { display: block; }
+      #name {
+        flex: 1;
+        min-width: 0;
+        font: 32px 'VT323', monospace;
+        line-height: 1;
+        color: var(--ink);
+        background: var(--bg);
+        border: 3px solid var(--rose);
+        padding: 4px 10px;
+        outline: none;
+        border-radius: 0;
+      }
+      #name:focus { border-color: var(--gold); }
+      #name::placeholder { color: #6e4a50; }
       .hidden { display: none !important; }
     </style>
   </head>
@@ -130,6 +151,12 @@
           <button id="replay" aria-label="Replay audio">▶</button>
           <input id="answer" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" />
           <button id="go">GO</button>
+        </div>
+      </div>
+      <div id="name-bar">
+        <div class="row">
+          <input id="name" maxlength="16" placeholder="your name" autocomplete="nickname" autocorrect="off" spellcheck="false" enterkeyhint="send" />
+          <button id="post">POST</button>
         </div>
       </div>
     </div>

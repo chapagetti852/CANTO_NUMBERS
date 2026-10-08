@@ -9,10 +9,11 @@ const ZH_DIGITS = ['零', '一', '二', '三', '四', '五', '六', '七', '八'
 const YALE_TENS_CONTRACTED: Record<number, string> = {
   2: 'yah', 3: 'sā-ah', 4: 'sei-ah', 5: 'ńgh-ah', 6: 'luhk-ah', 7: 'chāt-ah', 8: 'baat-ah', 9: 'gáu-ah',
 };
-// TTS spelling of the same. 呀 is the common colloquial spelling of the -ah syllable.
-// If Azure mispronounces these, this table is the one place to change.
+// TTS spelling of the same, chosen by ear from Azure test clips (npm run tts:test).
+// Round 1: 卅 good (三呀 came out "mah"), 四呀 good (卌 bad), 九呀 came out "lah".
+// 60–90 pending round 2. This table is the one place to change.
 const ZH_TENS_CONTRACTED: Record<number, string> = {
-  2: '廿', 3: '卅', 4: '卌', 5: '五呀', 6: '六呀', 7: '七呀', 8: '八呀', 9: '九呀',
+  2: '廿', 3: '卅', 4: '四呀', 5: '五呀', 6: '六呀', 7: '七呀', 8: '八呀', 9: '九呀',
 };
 
 export interface Reading {

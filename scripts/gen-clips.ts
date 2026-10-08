@@ -1,8 +1,10 @@
 // Generates the Listen-mode audio: one clip per item in each level's pool.
 // Voices rotate female / male so you hear both. Re-running only renders what changed
 // (the filename includes the voice and a hash of the TTS text) and deletes stale clips.
-// Clips marked bad on review.html (scripts/clip-review.json) are re-voiced; an item that is
-// bad in every voice is left out of Listen mode.
+// Clips marked bad on review.html (scripts/clip-review.json) are re-rendered: first with a
+// longer pause before the contracted "ah" (review 1: 42 of 44 bad clips were 7x/8x/9x, where
+// the voice runs the "ah" into the previous syllable), then in another voice. An item that is
+// bad in every variant is left out of Listen mode.
 //   npm run tts:clips
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
@@ -26,21 +28,31 @@ const items = LEVELS.flatMap((l) => pool(l.level));
 const dropped: string[] = [];
 let made = 0;
 
+/** The TTS text as generated, then with longer pauses before the contracted 呀. */
+function ttsVariants(tts: string): string[] {
+  if (!tts.includes('呀')) return [tts];
+  const bare = tts.replace(/<break time="\d+ms"\/>呀/g, '呀');
+  const withBreak = (ms: number) => bare.replace(/呀/g, `<break time="${ms}ms"/>呀`);
+  return [...new Set([tts, withBreak(50), withBreak(100)])];
+}
+
 for (const [i, it] of items.entries()) {
   if (manifest[it.id] || dropped.includes(it.id)) continue; // same item can appear in two levels' pools
   const first = ROTATION[i % ROTATION.length];
   const voices = [first, ...VOICES.filter((v) => v !== first)];
-  const voice = voices.find((v) => verdicts[fileFor(it.id, v, it.tts)] !== 'bad');
-  if (!voice) {
+  const candidates = voices.flatMap((voice) => ttsVariants(it.tts).map((tts) => ({ voice, tts })));
+  const pick = candidates.find((c) => verdicts[fileFor(it.id, c.voice, c.tts)] !== 'bad');
+  if (!pick) {
     dropped.push(it.id);
     continue;
   }
-  const file = fileFor(it.id, voice, it.tts);
+  const { voice, tts } = pick;
+  const file = fileFor(it.id, voice, tts);
   manifest[it.id] = file;
   if (existsSync(`${DIR}/${file}`)) continue;
-  writeFileSync(`${DIR}/${file}`, await synthesize(it.tts, voice));
+  writeFileSync(`${DIR}/${file}`, await synthesize(tts, voice));
   made++;
-  process.stdout.write(`\r${made} new clips (${i + 1}/${items.length}) ${it.display.padEnd(10)} ${it.tts}      `);
+  process.stdout.write(`\r${made} new clips (${i + 1}/${items.length}) ${it.display.padEnd(10)} ${tts}      `);
 }
 
 const keep = new Set(Object.values(manifest));

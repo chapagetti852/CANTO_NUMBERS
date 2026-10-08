@@ -10,10 +10,13 @@ const YALE_TENS_CONTRACTED: Record<number, string> = {
   2: 'yah', 3: 'sā-ah', 4: 'sei-ah', 5: 'ńgh-ah', 6: 'luhk-ah', 7: 'chāt-ah', 8: 'baat-ah', 9: 'gáu-ah',
 };
 // TTS spelling of the same, chosen by ear from Azure test clips (npm run tts:test).
-// Round 1: 卅 good (三呀 came out "mah"), 四呀 good (卌 bad), 九呀 came out "lah".
-// 60–90 pending round 2. This table is the one place to change.
+// Round 1: 卅 good (三呀 came out "mah"), 四呀 good (卌 bad). Rounds 2–3: 7x/8x/9x ran the
+// "ah" into the previous syllable ("nah"/"lah") with any spelling, and Azure zh-HK rejects
+// <phoneme>; a 20ms SSML break before 呀 fixes it. This table is the one place to change.
+const AH_BREAK = '<break time="20ms"/>';
 const ZH_TENS_CONTRACTED: Record<number, string> = {
-  2: '廿', 3: '卅', 4: '四呀', 5: '五呀', 6: '六呀', 7: '七呀', 8: '八呀', 9: '九呀',
+  2: '廿', 3: '卅', 4: '四呀', 5: '五呀', 6: '六呀',
+  7: `七${AH_BREAK}呀`, 8: `八${AH_BREAK}呀`, 9: `九${AH_BREAK}呀`,
 };
 
 export interface Reading {

@@ -33,7 +33,7 @@ export function speak(item: Item, rate = 1): void {
     return;
   }
   if (!('speechSynthesis' in window)) return;
-  const u = new SpeechSynthesisUtterance(item.tts);
+  const u = new SpeechSynthesisUtterance(item.tts.replace(/<[^>]+>/g, ''));
   u.lang = 'zh-HK';
   u.rate = rate;
   const voice = speechSynthesis.getVoices().find((v) => v.lang.replace('_', '-') === 'zh-HK');

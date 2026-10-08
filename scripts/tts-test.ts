@@ -33,9 +33,19 @@ const ROUNDS: Record<string, Case[]> = {
     ['MALE sā-ah baat mān (38)', '卅八蚊', VOICES[1]],
     ['MALE sei-ah ńgh (45)', '四呀五', VOICES[1]],
   ],
+  // Round 2 result: 6x and 9x fine with 呀 (9x not with 亞). 7x and 8x say "nah" with every
+  // spelling: the final -t links into the "ah". Azure zh-HK rejects <phoneme> (any alphabet),
+  // so round 3 tries short breaks before the "ah".
+  round3: [
+    ...([['chāt-ah sei (74)', '七呀四'], ['baat-ah yih (82)', '八呀二'], ['chāt-ah baat (78)', '七呀八'],
+      ['baat-ah gáu (89)', '八呀九']] as const)
+      .flatMap(([label, zh]): Case[] => (['20ms', '50ms', '100ms'] as const).map((ms, i): Case =>
+        [`${label} ${'ABC'[i]} ${ms}`, `${zh[0]}<break time="${ms}"/>${zh.slice(1)}`])),
+    ['gáu-ah gáu (99) plain 呀', '九呀九'],
+  ],
 };
 
-const round = process.argv[2] ?? 'round2';
+const round = process.argv[2] ?? 'round3';
 const dir = `audio-test/${round}`;
 mkdirSync(dir, { recursive: true });
 for (const [i, [label, zh, voice]] of ROUNDS[round].entries()) {

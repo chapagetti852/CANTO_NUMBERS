@@ -13,7 +13,7 @@ export interface Item {
   money: boolean;
   form: Form;
   answers: string[];    // accepted Yale, canonical first
-  tts: string;          // Chinese text for Azure
+  tts: string;          // Chinese text for Azure (may contain SSML tags like <break>)
 }
 
 export const LEVELS = [

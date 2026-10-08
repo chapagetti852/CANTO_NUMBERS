@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { setupCamera, WIDTH } from '../view';
-import { hideBar } from '../answerBar';
+import { hideBar, touch } from '../answerBar';
 import { playMusic, setMuted } from '../sound';
 import { HEX, PAL, save, state, type Mode } from '../state';
 import { confettiBackground, text } from '../ui';
@@ -42,15 +42,17 @@ export class MenuScene extends Phaser.Scene {
 
     MODES.forEach((m, i) => this.card(cx, 230 + i * 150, m));
 
-    // Answer input setting (Read mode).
-    const input = text(this, cx, 526, '', 11, HEX.rose).setInteractive({ useHandCursor: true });
-    const refresh = () => input.setText(`read answers: ${state.tiles ? 'tap tiles' : 'type'}  ⇄`);
-    input.on('pointerdown', () => {
-      state.tiles = !state.tiles;
-      save();
+    // On-screen keys vs typing: a PC choice only (phones always use the in-app keys).
+    if (!touch) {
+      const input = text(this, cx, 526, '', 11, HEX.rose).setInteractive({ useHandCursor: true });
+      const refresh = () => input.setText(`answer with: ${state.tiles ? 'on-screen keys' : 'keyboard'}  ⇄`);
+      input.on('pointerdown', () => {
+        state.tiles = !state.tiles;
+        save();
+        refresh();
+      });
       refresh();
-    });
-    refresh();
+    }
     const sound = text(this, cx, 552, '', 11, HEX.rose).setInteractive({ useHandCursor: true });
     const refreshSound = () => sound.setText(`music & sfx: ${state.muted ? 'off' : 'on'}  ⇄`);
     sound.on('pointerdown', () => {

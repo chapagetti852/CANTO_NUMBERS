@@ -1,16 +1,19 @@
-// The HTML answer bar under the canvas: input, GO/NEXT, replay, syllable tiles, tone buttons.
+// The HTML answer bar under the canvas: input, GO/NEXT, replay, syllable tiles, number pad, tones.
+// On phones the system keyboard never opens (it resizes the page and is janky); the in-app
+// keys are the only input. On PC they are optional (menu setting).
 import { applyTone } from './yale/check';
 
 const bar = document.getElementById('answer-bar')!;
 const input = document.getElementById('answer') as HTMLInputElement;
 const tiles = document.getElementById('tiles')!;
+const digits = document.getElementById('digits')!;
 const tones = document.getElementById('tones')!;
 const hint = document.getElementById('hint')!;
 const replay = document.getElementById('replay')!;
 const go = document.getElementById('go')!;
 
-/** On phones, tiles replace the system keyboard entirely. */
-const touch = window.matchMedia('(pointer: coarse)').matches;
+/** Phones and tablets: in-app keys only, never the system keyboard. */
+export const touch = window.matchMedia('(pointer: coarse)').matches;
 
 let onSubmit: (value: string) => void = () => undefined;
 let onReplay: () => void = () => undefined;
@@ -46,6 +49,10 @@ onTap(tones, (btn) => {
   updateHint();
 });
 
+onTap(digits, (btn) => {
+  input.value = btn.dataset.back !== undefined ? input.value.slice(0, -1) : input.value + btn.dataset.key;
+});
+
 onTap(tiles, (btn) => {
   const v = input.value.trimEnd();
   if (btn.dataset.back !== undefined) {
@@ -65,12 +72,12 @@ function updateHint(): void {
 }
 
 function focus(): void {
-  if (!touch || !input.readOnly) input.focus();
+  if (!touch) input.focus();
 }
 
 export interface BarOptions {
-  digits: boolean;      // Listen mode: numeric keypad, no tiles or tones
-  tiles: boolean;       // Read mode: syllable tiles
+  digits: boolean;      // Listen mode: number pad; Read mode: syllable tiles + tones
+  keys: boolean;        // PC setting: show the on-screen keys (phones always do)
   submit: (value: string) => void;
   replay: () => void;
 }
@@ -78,11 +85,13 @@ export interface BarOptions {
 export function showBar(o: BarOptions): void {
   onSubmit = o.submit;
   onReplay = o.replay;
-  tilesOn = !o.digits && o.tiles;
-  input.inputMode = o.digits ? 'decimal' : tilesOn && touch ? 'none' : 'text';
-  input.readOnly = tilesOn && touch;
-  input.placeholder = o.digits ? '38.50' : tilesOn ? '' : 'sāam go yih';
+  const keys = touch || o.keys;
+  tilesOn = !o.digits && keys;
+  input.inputMode = touch ? 'none' : o.digits ? 'decimal' : 'text';
+  input.readOnly = touch;
+  input.placeholder = keys ? '' : o.digits ? '38.50' : 'sāam go yih';
   tiles.classList.toggle('hidden', !tilesOn);
+  digits.classList.toggle('hidden', !(o.digits && keys));
   tones.classList.toggle('hidden', o.digits);
   hint.classList.toggle('hidden', !tilesOn);
   replay.classList.toggle('hidden', !o.digits);
@@ -105,7 +114,7 @@ export function clearInput(): void {
 /** While locked (reviewing a wrong answer) edits are ignored and GO becomes NEXT. */
 export function setLocked(on: boolean): void {
   locked = on;
-  input.readOnly = on || (tilesOn && touch);
+  input.readOnly = on || touch;
   go.textContent = on ? 'NEXT' : 'GO';
   if (on) hint.textContent = '';
   else updateHint();

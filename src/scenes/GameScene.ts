@@ -93,7 +93,7 @@ export class GameScene extends Phaser.Scene {
 
     showBar({
       digits: this.listen,
-      tiles: state.tiles,
+      keys: state.tiles,
       submit: (v) => this.submit(v),
       replay: () => this.listen && speak(this.item, this.rate),
     });

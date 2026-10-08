@@ -119,6 +119,20 @@
       }
       #tiles button[data-back] { grid-column: span 4; background: #6e2030; }
       #tones { margin-top: 6px; }
+      .pad { display: grid; gap: 5px; margin-top: 6px; }
+      .pad button {
+        padding: 8px 0;
+        background: #4a1520;
+        color: var(--ink);
+        font: 28px 'VT323', monospace;
+        line-height: 1;
+        box-shadow: inset -3px -3px 0 rgba(0,0,0,.35);
+      }
+      .pad button[data-back] { background: #6e2030; }
+      #digits { grid-template-columns: repeat(4, 1fr); }
+      #digits .wide { grid-column: span 4; }
+      #letters { grid-template-columns: repeat(7, 1fr); }
+      #letters button { font-size: 24px; padding: 6px 0; }
       #hint {
         margin-top: 6px;
         font: 18px 'VT323', monospace;
@@ -149,6 +163,8 @@
       }
       #name:focus { border-color: var(--gold); }
       #name::placeholder { color: #6e4a50; }
+      /* Phones: the fields only display what the in-app keys type; tapping them does nothing. */
+      @media (pointer: coarse) { #answer, #name { pointer-events: none; user-select: none; } }
       .hidden { display: none !important; }
     </style>
   </head>
@@ -170,6 +186,13 @@
           <button data-syl="fan">fan</button><button data-syl="ji">ji</button>
           <button data-back aria-label="Delete last syllable">⌫</button>
         </div>
+        <!-- Number pad for Listen mode (phones: always; PC: optional). -->
+        <div id="digits" class="pad">
+          <button data-key="1">1</button><button data-key="2">2</button><button data-key="3">3</button><button data-back aria-label="Delete">⌫</button>
+          <button data-key="4">4</button><button data-key="5">5</button><button data-key="6">6</button><button data-key=".">.</button>
+          <button data-key="7">7</button><button data-key="8">8</button><button data-key="9">9</button><button data-key="%">%</button>
+          <button data-key="0" class="wide">0</button>
+        </div>
         <div class="row" id="tones">
           <button data-tone="1">ā<small>1</small></button>
           <button data-tone="2">á<small>2</small></button>
@@ -184,6 +207,10 @@
         <div class="row">
           <input id="name" maxlength="16" placeholder="your name" autocomplete="nickname" autocorrect="off" spellcheck="false" enterkeyhint="send" />
           <button id="post">POST</button>
+        </div>
+        <!-- Letter pad for the leaderboard name on phones (no system keyboard). -->
+        <div id="letters" class="pad">
+          <button data-key="a">a</button><button data-key="b">b</button><button data-key="c">c</button><button data-key="d">d</button><button data-key="e">e</button><button data-key="f">f</button><button data-key="g">g</button><button data-key="h">h</button><button data-key="i">i</button><button data-key="j">j</button><button data-key="k">k</button><button data-key="l">l</button><button data-key="m">m</button><button data-key="n">n</button><button data-key="o">o</button><button data-key="p">p</button><button data-key="q">q</button><button data-key="r">r</button><button data-key="s">s</button><button data-key="t">t</button><button data-key="u">u</button><button data-key="v">v</button><button data-key="w">w</button><button data-key="x">x</button><button data-key="y">y</button><button data-key="z">z</button><button data-key=" " aria-label="Space">␣</button><button data-back aria-label="Delete">⌫</button>
         </div>
       </div>
     </div>

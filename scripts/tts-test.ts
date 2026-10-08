@@ -43,9 +43,14 @@ const ROUNDS: Record<string, Case[]> = {
         [`${label} ${'ABC'[i]} ${ms}`, `${zh[0]}<break time="${ms}"/>${zh.slice(1)}`])),
     ['gáu-ah gáu (99) plain 呀', '九呀九'],
   ],
+  // Round 3 said 20ms was clean, but in the full set ~40% of 7x–9x clips still said "nah";
+  // 50ms sounds robotic. Round 4 searches the window in between, in two voices.
+  round4: ([['74', '七呀四'], ['82', '八呀二'], ['97', '九呀七']] as const).flatMap(([n, zh]): Case[] =>
+    [VOICES[0], VOICES[1]].flatMap((voice): Case[] => [25, 30, 35, 40].map((ms): Case =>
+      [`${n} ${ms}ms ${voice.includes('WanLung') ? 'male' : 'female'}`, `${zh[0]}<break time="${ms}ms"/>${zh.slice(1)}`, voice]))),
 };
 
-const round = process.argv[2] ?? 'round3';
+const round = process.argv[2] ?? 'round4';
 const dir = `audio-test/${round}`;
 mkdirSync(dir, { recursive: true });
 for (const [i, [label, zh, voice]] of ROUNDS[round].entries()) {

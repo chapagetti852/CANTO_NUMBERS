@@ -2,9 +2,11 @@
 // Voices rotate female / male so you hear both. Re-running only renders what changed
 // (the filename includes the voice and a hash of the TTS text) and deletes stale clips.
 // Clips marked bad on review.html (scripts/clip-review.json) are re-rendered: first with a
-// longer pause before the contracted "ah" (review 1: 42 of 44 bad clips were 7x/8x/9x, where
-// the voice runs the "ah" into the previous syllable), then in another voice. An item that is
-// bad in every variant is left out of Listen mode.
+// slightly longer pause before the contracted "ah", then in another voice. An item that is bad
+// in every variant is left out of Listen mode.
+// Why: review 1 flagged 44/140 contracted clips, 42 of them 7x/8x/9x ("nah"/"lah": the voice
+// runs the "ah" into the previous syllable). Test round 4: 25ms is always clean but audibly a
+// little long; 50ms+ sounds robotic. So 20ms stays the default and 25ms is the fallback.
 //   npm run tts:clips
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
@@ -28,12 +30,11 @@ const items = LEVELS.flatMap((l) => pool(l.level));
 const dropped: string[] = [];
 let made = 0;
 
-/** The TTS text as generated, then with longer pauses before the contracted 呀. */
+/** The TTS text as generated, then with the fallback pause before the contracted 呀. */
 function ttsVariants(tts: string): string[] {
   if (!tts.includes('呀')) return [tts];
   const bare = tts.replace(/<break time="\d+ms"\/>呀/g, '呀');
-  const withBreak = (ms: number) => bare.replace(/呀/g, `<break time="${ms}ms"/>呀`);
-  return [...new Set([tts, withBreak(50), withBreak(100)])];
+  return [...new Set([tts, bare.replace(/呀/g, '<break time="25ms"/>呀')])];
 }
 
 for (const [i, it] of items.entries()) {
